@@ -26,81 +26,45 @@ import {
 } from "@/components/ui/select";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-
-// Mock data
-const mockAppointments = [
-  {
-    id: "1",
-    clientName: "María García",
-    phone: "+34612345678",
-    service: "Keratina (Alisado)",
-    date: new Date(Date.now() + 1000 * 60 * 60 * 24),
-    status: "confirmed",
-    reminderSent: true,
-    notes: "Primera vez que viene"
-  },
-  {
-    id: "2",
-    clientName: "Carmen López",
-    phone: "+34687654321",
-    service: "Corte/Peinado",
-    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2),
-    status: "pending",
-    reminderSent: false,
-    notes: ""
-  },
-  {
-    id: "3",
-    clientName: "Ana Martínez",
-    phone: "+34698765432",
-    service: "Tintes/Baños de Color",
-    date: new Date(Date.now() + 1000 * 60 * 60 * 3),
-    status: "confirmed",
-    reminderSent: true,
-    notes: "Traerá foto de referencia"
-  },
-  {
-    id: "4",
-    clientName: "Laura Fernández",
-    phone: "+34654321987",
-    service: "Botox Capilar",
-    date: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    status: "cancelled",
-    reminderSent: true,
-    notes: "Canceló por enfermedad"
-  },
-  {
-    id: "5",
-    clientName: "Sofia Ruiz",
-    phone: "+34611223344",
-    service: "Tratamiento Células Madre",
-    date: new Date(Date.now() + 1000 * 60 * 60 * 5),
-    status: "confirmed",
-    reminderSent: true,
-    notes: ""
-  }
-];
-
-const stats = [
-  { label: "Citas Hoy", value: 3, icon: Calendar, color: "text-primary" },
-  { label: "Pendientes", value: 1, icon: AlertCircle, color: "text-warning" },
-  { label: "Confirmadas", value: 4, icon: CheckCircle, color: "text-success" },
-  { label: "Canceladas", value: 1, icon: XCircle, color: "text-destructive" }
-];
+import { useAppointments, useAppointmentStats, useUpdateAppointment, type Appointment } from "@/hooks/useAppointments";
+import { useToast } from "@/hooks/use-toast";
 
 const AppointmentsTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [serviceFilter, setServiceFilter] = useState<string>("all");
+  const { toast } = useToast();
+  
+  const { data: appointments, isLoading } = useAppointments();
+  const stats = useAppointmentStats();
+  const updateAppointment = useUpdateAppointment();
 
-  const filteredAppointments = mockAppointments.filter((apt) => {
+  const filteredAppointments = appointments?.filter((apt) => {
     const matchesSearch = 
-      apt.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      apt.phone.includes(searchQuery);
+      apt.client_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      apt.phone_number.includes(searchQuery);
     const matchesStatus = statusFilter === "all" || apt.status === statusFilter;
-    const matchesService = serviceFilter === "all" || apt.service === serviceFilter;
+    const matchesService = serviceFilter === "all" || apt.service_type === serviceFilter;
     return matchesSearch && matchesStatus && matchesService;
-  });
+  }) || [];
+
+  const services = [...new Set(appointments?.map(a => a.service_type) || [])];
+
+  const handleStatusChange = async (id: string, newStatus: "confirmed" | "cancelled") => {
+    try {
+      await updateAppointment.mutateAsync({ id, status: newStatus });
+      toast({
+        title: "Estado actualizado",
+        description: `La cita ha sido ${newStatus === "confirmed" ? "confirmada" : "cancelada"}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el estado de la cita",
+        variant: "destructive"
+      });
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -130,7 +94,20 @@ const AppointmentsTab = () => {
     }
   };
 
-  const services = [...new Set(mockAppointments.map(a => a.service))];
+  const statCards = [
+    { label: "Citas Hoy", value: stats.todayCount, icon: Calendar, color: "text-primary" },
+    { label: "Pendientes", value: stats.pendingCount, icon: AlertCircle, color: "text-warning" },
+    { label: "Confirmadas", value: stats.confirmedCount, icon: CheckCircle, color: "text-success" },
+    { label: "Canceladas", value: stats.cancelledCount, icon: XCircle, color: "text-destructive" }
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-[calc(100vh-4rem)] lg:h-screen flex flex-col p-6">
@@ -142,7 +119,7 @@ const AppointmentsTab = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {stats.map((stat, index) => (
+        {statCards.map((stat, index) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 20 }}
@@ -185,20 +162,22 @@ const AppointmentsTab = () => {
               <SelectItem value="cancelled">Canceladas</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={serviceFilter} onValueChange={setServiceFilter}>
-            <SelectTrigger className="w-[200px] bg-muted border-primary/20">
-              <Scissors className="w-4 h-4 mr-2 text-muted-foreground" />
-              <SelectValue placeholder="Servicio" />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-primary/20">
-              <SelectItem value="all">Todos los servicios</SelectItem>
-              {services.map((service) => (
-                <SelectItem key={service} value={service}>
-                  {service}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {services.length > 0 && (
+            <Select value={serviceFilter} onValueChange={setServiceFilter}>
+              <SelectTrigger className="w-[200px] bg-muted border-primary/20">
+                <Scissors className="w-4 h-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Servicio" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-primary/20">
+                <SelectItem value="all">Todos los servicios</SelectItem>
+                {services.map((service) => (
+                  <SelectItem key={service} value={service}>
+                    {service}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
@@ -232,55 +211,79 @@ const AppointmentsTab = () => {
           </div>
 
           {/* Table Body */}
-          {filteredAppointments.map((appointment, index) => (
-            <motion.div
-              key={appointment.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="grid grid-cols-7 gap-4 p-4 border-b border-primary/5 hover:bg-muted/30 transition-colors"
-            >
-              <div className="font-medium text-foreground">{appointment.clientName}</div>
-              <div className="text-muted-foreground">{appointment.phone}</div>
-              <div className="text-foreground">{appointment.service}</div>
-              <div className="text-foreground">
-                <div>{format(appointment.date, "dd MMM yyyy", { locale: es })}</div>
-                <div className="text-sm text-muted-foreground flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {format(appointment.date, "HH:mm", { locale: es })}
-                </div>
-              </div>
-              <div>{getStatusBadge(appointment.status)}</div>
-              <div>
-                {appointment.reminderSent ? (
-                  <span className="flex items-center gap-1 text-primary">
-                    <CheckCircle className="w-4 h-4" />
-                    <span className="text-sm">Enviado</span>
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-muted-foreground">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">Pendiente</span>
-                  </span>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-primary/20 text-primary hover:bg-primary/10"
-                >
-                  Ver
-                </Button>
-              </div>
-            </motion.div>
-          ))}
-
-          {filteredAppointments.length === 0 && (
+          {filteredAppointments.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground">
               <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No se encontraron citas con los filtros aplicados</p>
+              <p>No hay citas registradas</p>
+              <p className="text-sm mt-2">Las citas creadas por Juliana IA aparecerán aquí</p>
             </div>
+          ) : (
+            filteredAppointments.map((appointment, index) => (
+              <motion.div
+                key={appointment.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="grid grid-cols-7 gap-4 p-4 border-b border-primary/5 hover:bg-muted/30 transition-colors"
+              >
+                <div className="font-medium text-foreground">{appointment.client_name}</div>
+                <div className="text-muted-foreground">{appointment.phone_number}</div>
+                <div className="text-foreground truncate">{appointment.service_type}</div>
+                <div className="text-foreground">
+                  <div>{format(new Date(appointment.appointment_date), "dd MMM yyyy", { locale: es })}</div>
+                  <div className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {format(new Date(appointment.appointment_date), "HH:mm", { locale: es })}
+                  </div>
+                </div>
+                <div>{getStatusBadge(appointment.status)}</div>
+                <div>
+                  {appointment.reminder_sent ? (
+                    <span className="flex items-center gap-1 text-primary">
+                      <CheckCircle className="w-4 h-4" />
+                      <span className="text-sm">Enviado</span>
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-muted-foreground">
+                      <Clock className="w-4 h-4" />
+                      <span className="text-sm">Pendiente</span>
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  {appointment.status === "pending" && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleStatusChange(appointment.id, "confirmed")}
+                        className="border-success/20 text-success hover:bg-success/10"
+                      >
+                        Confirmar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleStatusChange(appointment.id, "cancelled")}
+                        className="border-destructive/20 text-destructive hover:bg-destructive/10"
+                      >
+                        Cancelar
+                      </Button>
+                    </>
+                  )}
+                  {appointment.status !== "pending" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-primary/20 text-primary hover:bg-primary/10"
+                      disabled
+                    >
+                      Ver
+                    </Button>
+                  )}
+                </div>
+              </motion.div>
+            ))
           )}
         </div>
       </ScrollArea>
