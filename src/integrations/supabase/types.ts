@@ -14,7 +14,144 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      appointments: {
+        Row: {
+          appointment_date: string
+          client_name: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          phone_number: string
+          reminder_sent: boolean | null
+          service_type: string
+          status: string
+        }
+        Insert: {
+          appointment_date: string
+          client_name: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          phone_number: string
+          reminder_sent?: boolean | null
+          service_type: string
+          status?: string
+        }
+        Update: {
+          appointment_date?: string
+          client_name?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          phone_number?: string
+          reminder_sent?: boolean | null
+          service_type?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          id: string
+          message_content: string
+          phone_number: string
+          read: boolean | null
+          received_at: string | null
+          sender: string
+        }
+        Insert: {
+          id?: string
+          message_content: string
+          phone_number: string
+          read?: boolean | null
+          received_at?: string | null
+          sender: string
+        }
+        Update: {
+          id?: string
+          message_content?: string
+          phone_number?: string
+          read?: boolean | null
+          received_at?: string | null
+          sender?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      salon_settings: {
+        Row: {
+          about_salon: string | null
+          created_at: string | null
+          google_maps_url: string | null
+          id: number
+          salon_address: string | null
+          salon_email: string | null
+          salon_name: string | null
+          salon_phone: string | null
+          services: string[] | null
+          timezone: string | null
+          updated_at: string | null
+          whatsapp_webhook_url: string | null
+          working_hours: Json | null
+        }
+        Insert: {
+          about_salon?: string | null
+          created_at?: string | null
+          google_maps_url?: string | null
+          id?: number
+          salon_address?: string | null
+          salon_email?: string | null
+          salon_name?: string | null
+          salon_phone?: string | null
+          services?: string[] | null
+          timezone?: string | null
+          updated_at?: string | null
+          whatsapp_webhook_url?: string | null
+          working_hours?: Json | null
+        }
+        Update: {
+          about_salon?: string | null
+          created_at?: string | null
+          google_maps_url?: string | null
+          id?: number
+          salon_address?: string | null
+          salon_email?: string | null
+          salon_name?: string | null
+          salon_phone?: string | null
+          services?: string[] | null
+          timezone?: string | null
+          updated_at?: string | null
+          whatsapp_webhook_url?: string | null
+          working_hours?: Json | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
