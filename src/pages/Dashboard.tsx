@@ -8,7 +8,8 @@ import {
   LogOut, 
   Menu,
   X,
-  ChevronRight
+  ChevronRight,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +22,7 @@ type Tab = "messages" | "appointments" | "settings";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
+  const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -60,16 +61,36 @@ const Dashboard = () => {
                   className="overflow-hidden"
                 >
                   <h1 className="font-serif text-xl text-primary whitespace-nowrap">
-                    Juliana IA
+                    LucIA
                   </h1>
-                  <p className="text-xs text-muted-foreground whitespace-nowrap truncate max-w-[180px]">
-                    {user?.email}
+                  <p className="text-xs text-muted-foreground whitespace-nowrap">
+                    Peluquería Reyna
                   </p>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         </div>
+
+        {/* Welcome Message */}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="px-6 py-4 border-b border-primary/10 overflow-hidden"
+            >
+              <div className="flex items-center gap-2 text-primary">
+                <Sparkles className="w-4 h-4" />
+                <span className="font-medium">¡Bienvenida, Ana!</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Tu asistente LucIA está lista
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Toggle Button */}
         <button
@@ -139,7 +160,10 @@ const Dashboard = () => {
           <div className="w-10 h-10 rounded-full border-2 border-primary flex items-center justify-center">
             <Crown className="w-5 h-5 text-primary" />
           </div>
-          <h1 className="font-serif text-xl text-primary">Juliana IA</h1>
+          <div>
+            <h1 className="font-serif text-xl text-primary">LucIA</h1>
+            <p className="text-xs text-muted-foreground">¡Hola, Ana!</p>
+          </div>
         </div>
         <Button
           variant="ghost"
@@ -160,6 +184,15 @@ const Dashboard = () => {
             exit={{ opacity: 0 }}
             className="lg:hidden fixed inset-0 bg-background/95 backdrop-blur-sm z-20 pt-16"
           >
+            <div className="p-4 border-b border-primary/10 mx-4 mb-4">
+              <div className="flex items-center gap-2 text-primary">
+                <Sparkles className="w-5 h-5" />
+                <span className="font-medium text-lg">¡Bienvenida, Ana!</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Tu asistente LucIA está lista para ayudarte
+              </p>
+            </div>
             <nav className="p-4 space-y-2">
               {tabs.map((tab) => (
                 <button
