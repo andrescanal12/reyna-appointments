@@ -1,0 +1,15 @@
+{
+    "mcpServers": {
+        "supabase-reyna": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@supabase/mcp-server-supabase"
+            ],
+            "env": {
+                "SUPABASE_URL": "https://syvdkxpjzqdhevmivphf.supabase.co",
+                "SUPABASE_ACCESS_TOKEN": "sb_publishable_YUQpSobpdzEdQjroKahatQ_7sDEKF2C"
+            }
+        }
+    }
+}

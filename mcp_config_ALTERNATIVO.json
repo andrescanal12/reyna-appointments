@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "supabase-reyna": {
+            "url": "https://mcp.supabase.com/mcp?project_ref=eajpjrcmuoalfcvfrvgk",
+            "transport": "sse",
+            "headers": {
+                "Authorization": "Bearer sb_publishable_YUQpSobpdzEdQjroKahatQ_7sDEKF2C"
+            }
+        }
+    }
+}
