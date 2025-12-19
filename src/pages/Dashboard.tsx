@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import MessagesTab from "@/components/dashboard/MessagesTab";
 import AppointmentsTab from "@/components/dashboard/AppointmentsTab";
 import SettingsTab from "@/components/dashboard/SettingsTab";
@@ -20,6 +21,7 @@ type Tab = "messages" | "appointments" | "settings";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { signOut, user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -30,7 +32,8 @@ const Dashboard = () => {
     { id: "settings" as Tab, label: "Configuración", icon: Settings },
   ];
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await signOut();
     navigate("/");
   };
 
@@ -59,8 +62,8 @@ const Dashboard = () => {
                   <h1 className="font-serif text-xl text-primary whitespace-nowrap">
                     Juliana IA
                   </h1>
-                  <p className="text-xs text-muted-foreground whitespace-nowrap">
-                    Peluquería Reyna
+                  <p className="text-xs text-muted-foreground whitespace-nowrap truncate max-w-[180px]">
+                    {user?.email}
                   </p>
                 </motion.div>
               )}

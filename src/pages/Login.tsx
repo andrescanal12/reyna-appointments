@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signIn } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -21,15 +23,26 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate login - will be replaced with Supabase auth
-    setTimeout(() => {
-      setIsLoading(false);
+    const { error } = await signIn(formData.email, formData.password);
+    
+    setIsLoading(false);
+    
+    if (error) {
       toast({
-        title: "Bienvenido",
-        description: "Has iniciado sesión correctamente",
+        title: "Error al iniciar sesión",
+        description: error.message === "Invalid login credentials" 
+          ? "Credenciales incorrectas. Verifica tu email y contraseña."
+          : error.message,
+        variant: "destructive"
       });
-      navigate("/dashboard");
-    }, 1500);
+      return;
+    }
+
+    toast({
+      title: "Bienvenido",
+      description: "Has iniciado sesión correctamente",
+    });
+    navigate("/dashboard");
   };
 
   return (

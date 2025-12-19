@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   Building2, 
@@ -24,19 +24,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useSalonSettings, useUpdateSalonSettings } from "@/hooks/useSalonSettings";
 
 const SettingsTab = () => {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const { data: salonSettings, isLoading } = useSalonSettings();
+  const updateSettings = useUpdateSalonSettings();
+  
   const [settings, setSettings] = useState({
-    salonName: "Peluquería Reyna",
-    salonAddress: "C. Alcalde Suárez Llanos, 19, 03012 Alicante",
-    salonPhone: "+34 965 123 456",
-    salonEmail: "info@peluqueriareyna.com",
-    workingHours: {
-      tuesdaySaturday: "10:00-14:00, 16:00-20:00",
-      lunchBreak: "14:00-16:00",
-      closed: ["sunday", "monday"]
+    salon_name: "Peluquería Reyna",
+    salon_address: "C. Alcalde Suárez Llanos, 19, 03012 Alicante",
+    salon_phone: "",
+    salon_email: "",
+    working_hours: {
+      tuesday_saturday: "10:00-14:00, 16:00-20:00",
+      lunch_break: "14:00-16:00",
+      closed: ["sunday", "monday"] as string[]
     },
     services: [
       "Corte/Peinado - 45 min",
@@ -47,23 +50,58 @@ const SettingsTab = () => {
       "Botox Capilar - Desde 80€ - 4h 30min",
       "Reconstrucción (Radiante Glock) - Desde 50€ - 4h"
     ],
-    aboutSalon: "Peluquería Reyna - Tu belleza es nuestra pasión. Contamos con años de experiencia ofreciendo los mejores tratamientos capilares.",
-    webhookUrl: "",
+    about_salon: "Peluquería Reyna - Tu belleza es nuestra pasión.",
+    whatsapp_webhook_url: "",
     timezone: "Europe/Madrid",
-    googleMapsUrl: "https://www.google.es/maps/place/Sal%C3%B3n+de+Belleza+Reina"
+    google_maps_url: ""
   });
 
   const [newService, setNewService] = useState("");
 
+  // Load settings from database
+  useEffect(() => {
+    if (salonSettings) {
+      setSettings({
+        salon_name: salonSettings.salon_name,
+        salon_address: salonSettings.salon_address,
+        salon_phone: salonSettings.salon_phone || "",
+        salon_email: salonSettings.salon_email || "",
+        working_hours: salonSettings.working_hours,
+        services: salonSettings.services,
+        about_salon: salonSettings.about_salon,
+        whatsapp_webhook_url: salonSettings.whatsapp_webhook_url || "",
+        timezone: salonSettings.timezone,
+        google_maps_url: salonSettings.google_maps_url
+      });
+    }
+  }, [salonSettings]);
+
   const handleSave = async () => {
-    setIsLoading(true);
-    // Simulate save - will be replaced with Supabase
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    toast({
-      title: "Configuración guardada",
-      description: "Los cambios se han guardado correctamente",
-    });
+    try {
+      await updateSettings.mutateAsync({
+        salon_name: settings.salon_name,
+        salon_address: settings.salon_address,
+        salon_phone: settings.salon_phone || null,
+        salon_email: settings.salon_email || null,
+        working_hours: settings.working_hours,
+        services: settings.services,
+        about_salon: settings.about_salon,
+        whatsapp_webhook_url: settings.whatsapp_webhook_url || null,
+        timezone: settings.timezone,
+        google_maps_url: settings.google_maps_url
+      });
+      
+      toast({
+        title: "Configuración guardada",
+        description: "Los cambios se han guardado correctamente",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudieron guardar los cambios",
+        variant: "destructive"
+      });
+    }
   };
 
   const addService = () => {
@@ -82,6 +120,14 @@ const SettingsTab = () => {
       services: settings.services.filter((_, i) => i !== index)
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <ScrollArea className="h-[calc(100vh-4rem)] lg:h-screen">
@@ -108,8 +154,8 @@ const SettingsTab = () => {
                 <Label htmlFor="salonName">Nombre de la peluquería</Label>
                 <Input
                   id="salonName"
-                  value={settings.salonName}
-                  onChange={(e) => setSettings({ ...settings, salonName: e.target.value })}
+                  value={settings.salon_name}
+                  onChange={(e) => setSettings({ ...settings, salon_name: e.target.value })}
                   className="bg-muted border-primary/20 focus:border-primary"
                 />
               </div>
@@ -117,8 +163,8 @@ const SettingsTab = () => {
                 <Label htmlFor="salonPhone">Teléfono</Label>
                 <Input
                   id="salonPhone"
-                  value={settings.salonPhone}
-                  onChange={(e) => setSettings({ ...settings, salonPhone: e.target.value })}
+                  value={settings.salon_phone}
+                  onChange={(e) => setSettings({ ...settings, salon_phone: e.target.value })}
                   className="bg-muted border-primary/20 focus:border-primary"
                 />
               </div>
@@ -129,8 +175,8 @@ const SettingsTab = () => {
                 </Label>
                 <Input
                   id="salonAddress"
-                  value={settings.salonAddress}
-                  onChange={(e) => setSettings({ ...settings, salonAddress: e.target.value })}
+                  value={settings.salon_address}
+                  onChange={(e) => setSettings({ ...settings, salon_address: e.target.value })}
                   className="bg-muted border-primary/20 focus:border-primary"
                 />
               </div>
@@ -139,8 +185,8 @@ const SettingsTab = () => {
                 <Input
                   id="salonEmail"
                   type="email"
-                  value={settings.salonEmail}
-                  onChange={(e) => setSettings({ ...settings, salonEmail: e.target.value })}
+                  value={settings.salon_email}
+                  onChange={(e) => setSettings({ ...settings, salon_email: e.target.value })}
                   className="bg-muted border-primary/20 focus:border-primary"
                 />
               </div>
@@ -151,8 +197,8 @@ const SettingsTab = () => {
                 </Label>
                 <Input
                   id="googleMapsUrl"
-                  value={settings.googleMapsUrl}
-                  onChange={(e) => setSettings({ ...settings, googleMapsUrl: e.target.value })}
+                  value={settings.google_maps_url}
+                  onChange={(e) => setSettings({ ...settings, google_maps_url: e.target.value })}
                   className="bg-muted border-primary/20 focus:border-primary"
                 />
               </div>
@@ -174,10 +220,10 @@ const SettingsTab = () => {
               <div className="space-y-2">
                 <Label>Martes a Sábado</Label>
                 <Input
-                  value={settings.workingHours.tuesdaySaturday}
+                  value={settings.working_hours.tuesday_saturday}
                   onChange={(e) => setSettings({
                     ...settings,
-                    workingHours: { ...settings.workingHours, tuesdaySaturday: e.target.value }
+                    working_hours: { ...settings.working_hours, tuesday_saturday: e.target.value }
                   })}
                   className="bg-muted border-primary/20 focus:border-primary"
                   placeholder="10:00-14:00, 16:00-20:00"
@@ -186,10 +232,10 @@ const SettingsTab = () => {
               <div className="space-y-2">
                 <Label>Hora de comida (cerrado)</Label>
                 <Input
-                  value={settings.workingHours.lunchBreak}
+                  value={settings.working_hours.lunch_break}
                   onChange={(e) => setSettings({
                     ...settings,
-                    workingHours: { ...settings.workingHours, lunchBreak: e.target.value }
+                    working_hours: { ...settings.working_hours, lunch_break: e.target.value }
                   })}
                   className="bg-muted border-primary/20 focus:border-primary"
                   placeholder="14:00-16:00"
@@ -282,13 +328,14 @@ const SettingsTab = () => {
               <Label htmlFor="webhookUrl">URL del Webhook (Twilio)</Label>
               <Input
                 id="webhookUrl"
-                value={settings.webhookUrl}
-                onChange={(e) => setSettings({ ...settings, webhookUrl: e.target.value })}
-                placeholder="https://tu-proyecto.supabase.co/functions/v1/twilio-webhook-whatsapp"
+                value={settings.whatsapp_webhook_url}
+                onChange={(e) => setSettings({ ...settings, whatsapp_webhook_url: e.target.value })}
+                placeholder="Se configurará automáticamente"
                 className="bg-muted border-primary/20 focus:border-primary font-mono text-sm"
+                readOnly
               />
               <p className="text-sm text-muted-foreground mt-2">
-                Esta URL se configurará automáticamente en Twilio para recibir los mensajes de WhatsApp.
+                Esta URL se configurará automáticamente cuando se active la integración con WhatsApp.
               </p>
             </div>
           </motion.section>
@@ -302,8 +349,8 @@ const SettingsTab = () => {
           >
             <h3 className="font-serif text-xl text-primary mb-6">Acerca de la Peluquería</h3>
             <Textarea
-              value={settings.aboutSalon}
-              onChange={(e) => setSettings({ ...settings, aboutSalon: e.target.value })}
+              value={settings.about_salon}
+              onChange={(e) => setSettings({ ...settings, about_salon: e.target.value })}
               rows={4}
               className="bg-muted border-primary/20 focus:border-primary resize-none"
               placeholder="Describe tu peluquería..."
@@ -319,10 +366,10 @@ const SettingsTab = () => {
           >
             <Button
               onClick={handleSave}
-              disabled={isLoading}
+              disabled={updateSettings.isPending}
               className="btn-gold px-8 py-6 text-lg rounded-xl"
             >
-              {isLoading ? (
+              {updateSettings.isPending ? (
                 <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
               ) : (
                 <>
