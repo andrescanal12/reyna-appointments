@@ -202,7 +202,7 @@ const MessagesTab = () => {
             {/* Input Area (Read-only for now) */}
             <div className="p-4 border-t border-primary/10 bg-reyna-charcoal">
               <div className="flex items-center gap-2 text-muted-foreground text-sm justify-center py-2">
-                <span>Los mensajes se gestionan automáticamente por Juliana IA vía WhatsApp</span>
+                <span>Los mensajes se gestionan automáticamente por LucIA vía WhatsApp</span>
               </div>
             </div>
           </>

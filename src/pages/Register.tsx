@@ -104,7 +104,7 @@ const Register = () => {
               <Crown className="w-10 h-10 text-primary" />
             </motion.div>
             <h1 className="font-serif text-3xl text-primary mb-2">Crear Cuenta</h1>
-            <p className="text-muted-foreground">Únete a Juliana IA</p>
+            <p className="text-muted-foreground">Únete a LucIA</p>
           </div>
 
           {/* Form */}
