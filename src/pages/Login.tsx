@@ -39,7 +39,7 @@ const Login = () => {
     }
 
     toast({
-      title: "Bienvenido",
+      title: "¡Bienvenida, Ana!",
       description: "Has iniciado sesión correctamente",
     });
     navigate("/dashboard");
@@ -79,7 +79,7 @@ const Login = () => {
               <Crown className="w-10 h-10 text-primary" />
             </motion.div>
             <h1 className="font-serif text-3xl text-primary mb-2">Iniciar Sesión</h1>
-            <p className="text-muted-foreground">Accede a tu panel de Juliana IA</p>
+            <p className="text-muted-foreground">Accede a tu panel de LucIA</p>
           </div>
 
           {/* Form */}
@@ -149,7 +149,7 @@ const Login = () => {
               <div className="w-full border-t border-primary/20" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-card text-muted-foreground">¿Nuevo en Juliana IA?</span>
+              <span className="px-4 bg-card text-muted-foreground">¿Nueva en LucIA?</span>
             </div>
           </div>
 
