@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Crown, 
-  MessageCircle, 
-  Calendar, 
-  Settings, 
-  LogOut, 
+import {
+  Crown,
+  MessageCircle,
+  Calendar,
+  Settings,
+  LogOut,
   Menu,
   X,
   ChevronRight,
@@ -22,10 +22,12 @@ type Tab = "messages" | "appointments" | "settings";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("messages");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Admin';
 
   const tabs = [
     { id: "messages" as Tab, label: "Mensajes", icon: MessageCircle },
@@ -47,10 +49,14 @@ const Dashboard = () => {
         className="hidden lg:flex flex-col bg-reyna-charcoal border-r border-primary/10 relative z-20"
       >
         {/* Logo */}
-        <div className="p-6 border-b border-primary/10">
+        <div className="p-6 border-b border-primary/10 bg-reyna-black/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full border-2 border-primary flex items-center justify-center flex-shrink-0">
-              <Crown className="w-5 h-5 text-primary" />
+            <div className="w-12 h-12 rounded-full border-2 border-primary overflow-hidden flex-shrink-0 shadow-gold-glow">
+              <img
+                src="/logo-reyna.jpg"
+                alt="Logo"
+                className="w-full h-full object-cover"
+              />
             </div>
             <AnimatePresence>
               {sidebarOpen && (
@@ -82,8 +88,8 @@ const Dashboard = () => {
               className="px-6 py-4 border-b border-primary/10 overflow-hidden"
             >
               <div className="flex items-center gap-2 text-primary">
-                <Sparkles className="w-4 h-4" />
-                <span className="font-medium">¡Bienvenida, Ana!</span>
+                <Sparkles className="w-4 h-4 shadow-gold-glow" />
+                <span className="font-medium capitalize">¡Hola, {userName}!</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Tu asistente LucIA está lista
@@ -108,11 +114,10 @@ const Dashboard = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                activeTab === tab.id
-                  ? "bg-primary/10 text-primary border border-primary/20"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === tab.id
+                ? "bg-primary/10 text-primary border border-primary/20"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
             >
               <tab.icon className="w-5 h-5 flex-shrink-0" />
               <AnimatePresence>
@@ -157,12 +162,16 @@ const Dashboard = () => {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-reyna-charcoal border-b border-primary/10 flex items-center justify-between px-4 z-30">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full border-2 border-primary flex items-center justify-center">
-            <Crown className="w-5 h-5 text-primary" />
+          <div className="w-12 h-12 rounded-full border-2 border-primary overflow-hidden shadow-gold-glow">
+            <img
+              src="/logo-reyna.jpg"
+              alt="Logo"
+              className="w-full h-full object-cover"
+            />
           </div>
           <div>
-            <h1 className="font-serif text-xl text-primary">LucIA</h1>
-            <p className="text-xs text-muted-foreground">¡Hola, Ana!</p>
+            <h1 className="font-serif text-xl text-primary font-bold">LucIA</h1>
+            <p className="text-xs text-muted-foreground capitalize">¡Hola, {userName}!</p>
           </div>
         </div>
         <Button
@@ -201,11 +210,10 @@ const Dashboard = () => {
                     setActiveTab(tab.id);
                     setMobileMenuOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-200 ${
-                    activeTab === tab.id
-                      ? "bg-primary/10 text-primary border border-primary/20"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-200 ${activeTab === tab.id
+                    ? "bg-primary/10 text-primary border border-primary/20"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
                 >
                   <tab.icon className="w-6 h-6" />
                   <span className="text-lg">{tab.label}</span>

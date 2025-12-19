@@ -24,13 +24,13 @@ const Login = () => {
     setIsLoading(true);
 
     const { error } = await signIn(formData.email, formData.password);
-    
+
     setIsLoading(false);
-    
+
     if (error) {
       toast({
         title: "Error al iniciar sesión",
-        description: error.message === "Invalid login credentials" 
+        description: error.message === "Invalid login credentials"
           ? "Credenciales incorrectas. Verifica tu email y contraseña."
           : error.message,
         variant: "destructive"
@@ -69,17 +69,26 @@ const Login = () => {
       >
         <div className="glass-card p-8 md:p-10">
           {/* Logo */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-10">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="inline-flex items-center justify-center w-20 h-20 rounded-full border-2 border-primary mb-4"
+              className="inline-block relative mb-6"
             >
-              <Crown className="w-10 h-10 text-primary" />
+              <div className="relative w-32 h-32 mx-auto rounded-full overflow-hidden border-2 border-primary shadow-gold animate-float">
+                <img
+                  src="/logo-reyna.jpg"
+                  alt="Peluquería Reyna Logo"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-reyna-charcoal rounded-full border border-primary flex items-center justify-center animate-pulse-gold">
+                <Crown className="w-5 h-5 text-primary" />
+              </div>
             </motion.div>
-            <h1 className="font-serif text-3xl text-primary mb-2">Iniciar Sesión</h1>
-            <p className="text-muted-foreground">Accede a tu panel de LucIA</p>
+            <h1 className="font-serif text-4xl text-gradient-gold mb-3">Iniciar Sesión</h1>
+            <p className="text-muted-foreground font-light tracking-wide italic">"Elegancia en cada detalle"</p>
           </div>
 
           {/* Form */}

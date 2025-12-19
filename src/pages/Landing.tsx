@@ -41,9 +41,13 @@ const Landing = () => {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="mb-8 flex justify-center"
           >
-            <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-2 border-primary flex items-center justify-center animate-pulse-gold">
-              <Crown className="w-16 h-16 md:w-20 md:h-20 text-primary" />
-              <div className="absolute inset-0 rounded-full bg-primary/10 animate-ping" style={{ animationDuration: "3s" }} />
+            <div className="relative w-40 h-40 md:w-56 md:h-56 rounded-full border-4 border-primary overflow-hidden shadow-gold animate-float">
+              <img
+                src="/logo-reyna.jpg"
+                alt="Peluquería Reyna Logo"
+                className="w-full h-full object-cover scale-110"
+              />
+              <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/60 to-transparent" />
             </div>
           </motion.div>
 
@@ -180,12 +184,18 @@ const Landing = () => {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="glass-card p-2 rounded-3xl shadow-gold-lg"
+            className="glass-card p-2 rounded-3xl shadow-gold-lg overflow-hidden"
           >
-            <div className="bg-reyna-charcoal rounded-2xl p-8 aspect-video flex items-center justify-center">
-              <div className="text-center">
-                <Crown className="w-20 h-20 text-primary mx-auto mb-4 opacity-50" />
-                <p className="text-muted-foreground">Vista previa del dashboard</p>
+            <div className="bg-reyna-charcoal rounded-2xl p-0 aspect-video flex items-center justify-center relative group">
+              <img
+                src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=1600"
+                alt="Interior de la peluquería"
+                className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+              <div className="absolute bottom-8 left-8 text-left">
+                <p className="text-2xl font-serif text-primary">Atención Personalizada</p>
+                <p className="text-muted-foreground">Donde la tecnología se une con la artesanía</p>
               </div>
             </div>
           </motion.div>
@@ -223,8 +233,10 @@ const Landing = () => {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Crown className="w-8 h-8 text-primary" />
-              <span className="font-serif text-xl text-primary">Peluquería Reyna</span>
+              <div className="w-10 h-10 rounded-full border border-primary overflow-hidden">
+                <img src="/logo-reyna.jpg" alt="Logo" className="w-full h-full object-cover" />
+              </div>
+              <span className="font-serif text-xl text-primary font-semibold tracking-tighter">Peluquería Reyna</span>
             </div>
             <p className="text-muted-foreground text-sm">
               © 2025 Peluquería Reyna. Powered by LucIA.
