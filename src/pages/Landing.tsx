@@ -10,7 +10,7 @@ const Landing = () => {
     {
       icon: MessageCircle,
       title: "Atención 24/7",
-      description: "Juliana responde automáticamente a tus clientes en WhatsApp, incluso fuera del horario comercial"
+      description: "LucIA responde automáticamente a tus clientes en WhatsApp, incluso fuera del horario comercial"
     },
     {
       icon: Calendar,
@@ -65,7 +65,7 @@ const Landing = () => {
             className="text-xl md:text-2xl lg:text-3xl text-muted-foreground mb-4"
           >
             Gestión inteligente de citas con{" "}
-            <span className="text-primary font-semibold">Juliana IA</span>
+            <span className="text-primary font-semibold">LucIA</span>
           </motion.p>
 
           <motion.p
@@ -130,7 +130,7 @@ const Landing = () => {
             transition={{ duration: 0.6 }}
             className="font-serif text-4xl md:text-5xl text-center mb-16 text-primary"
           >
-            ¿Por qué Juliana IA?
+            ¿Por qué LucIA?
           </motion.h2>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -227,7 +227,7 @@ const Landing = () => {
               <span className="font-serif text-xl text-primary">Peluquería Reyna</span>
             </div>
             <p className="text-muted-foreground text-sm">
-              © 2025 Peluquería Reyna. Powered by Juliana IA.
+              © 2025 Peluquería Reyna. Powered by LucIA.
             </p>
           </div>
         </div>
