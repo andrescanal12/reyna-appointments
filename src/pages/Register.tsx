@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signUp } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -31,17 +33,41 @@ const Register = () => {
       return;
     }
 
+    if (formData.password.length < 6) {
+      toast({
+        title: "Error",
+        description: "La contraseña debe tener al menos 6 caracteres",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
 
-    // Simulate registration - will be replaced with Supabase auth
-    setTimeout(() => {
-      setIsLoading(false);
+    const { error } = await signUp(formData.email, formData.password, formData.name);
+    
+    setIsLoading(false);
+    
+    if (error) {
+      let errorMessage = error.message;
+      
+      if (error.message.includes("User already registered")) {
+        errorMessage = "Este email ya está registrado. Intenta iniciar sesión.";
+      }
+      
       toast({
-        title: "Cuenta creada",
-        description: "Tu cuenta ha sido creada correctamente",
+        title: "Error al crear cuenta",
+        description: errorMessage,
+        variant: "destructive"
       });
-      navigate("/dashboard");
-    }, 1500);
+      return;
+    }
+
+    toast({
+      title: "Cuenta creada",
+      description: "Tu cuenta ha sido creada correctamente",
+    });
+    navigate("/dashboard");
   };
 
   return (
