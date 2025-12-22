@@ -51,6 +51,26 @@ export function useAppointments() {
   return query;
 }
 
+export function useCreateAppointment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (newAppointment: Omit<Appointment, "id" | "created_at" | "reminder_sent">) => {
+      const { data, error } = await supabase
+        .from("appointments")
+        .insert([newAppointment])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    },
+  });
+}
+
 export function useUpdateAppointment() {
   const queryClient = useQueryClient();
 
@@ -106,11 +126,11 @@ export function useAppointmentStats() {
   if (appointments) {
     appointments.forEach((apt) => {
       const aptDate = new Date(apt.appointment_date);
-      
+
       if (aptDate >= today && aptDate < tomorrow) {
         stats.todayCount++;
       }
-      
+
       if (apt.status === "pending") stats.pendingCount++;
       if (apt.status === "confirmed") stats.confirmedCount++;
       if (apt.status === "cancelled") stats.cancelledCount++;
