@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { 
-  Building2, 
-  MapPin, 
-  Clock, 
-  Scissors, 
-  Globe, 
-  Link2, 
+import {
+  Building2,
+  MapPin,
+  Clock,
+  Scissors,
+  Globe,
+  Link2,
   Save,
   Plus,
   X
@@ -30,7 +30,7 @@ const SettingsTab = () => {
   const { toast } = useToast();
   const { data: salonSettings, isLoading } = useSalonSettings();
   const updateSettings = useUpdateSalonSettings();
-  
+
   const [settings, setSettings] = useState({
     salon_name: "Peluquería Reyna",
     salon_address: "C. Alcalde Suárez Llanos, 19, 03012 Alicante",
@@ -90,7 +90,7 @@ const SettingsTab = () => {
         timezone: settings.timezone,
         google_maps_url: settings.google_maps_url
       });
-      
+
       toast({
         title: "Configuración guardada",
         description: "Los cambios se han guardado correctamente",
@@ -330,9 +330,8 @@ const SettingsTab = () => {
                 id="webhookUrl"
                 value={settings.whatsapp_webhook_url}
                 onChange={(e) => setSettings({ ...settings, whatsapp_webhook_url: e.target.value })}
-                placeholder="Se configurará automáticamente"
+                placeholder="https://tu-proyecto.supabase.co/functions/v1/whatsapp-webhook"
                 className="bg-muted border-primary/20 focus:border-primary font-mono text-sm"
-                readOnly
               />
               <p className="text-sm text-muted-foreground mt-2">
                 Esta URL se configurará automáticamente cuando se active la integración con WhatsApp.
