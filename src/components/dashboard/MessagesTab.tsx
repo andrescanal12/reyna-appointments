@@ -1,21 +1,40 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Search, Phone, Clock, CheckCheck, MessageCircle } from "lucide-react";
+import { Search, Phone, Clock, CheckCheck, MessageCircle, Edit2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useConversations, useMessages, useMarkMessagesAsRead, type Conversation, type Message } from "@/hooks/useMessages";
+import { useUpdateClientName } from "@/hooks/useClients";
+import { useToast } from "@/hooks/use-toast";
 
-const MessagesTab = () => {
-  const [selectedChat, setSelectedChat] = useState<string | null>(null);
+interface MessagesTabProps {
+  initialSelectedChat?: string | null;
+}
+
+const MessagesTab = ({ initialSelectedChat }: MessagesTabProps) => {
+  const [selectedChat, setSelectedChat] = useState<string | null>(initialSelectedChat || null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [newClientName, setNewClientName] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  
+  const { toast } = useToast();
+
   const { data: conversations, isLoading: conversationsLoading } = useConversations();
   const { data: messages, isLoading: messagesLoading } = useMessages(selectedChat);
   const markAsRead = useMarkMessagesAsRead();
+  const updateClientName = useUpdateClientName();
 
   const filteredConversations = conversations?.filter(
     (conv) =>
@@ -88,11 +107,10 @@ const MessagesTab = () => {
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
                   onClick={() => setSelectedChat(conversation.phone_number)}
-                  className={`w-full p-4 rounded-xl mb-2 text-left transition-all duration-200 ${
-                    selectedChat === conversation.phone_number
-                      ? "bg-primary/10 border border-primary/20"
-                      : "hover:bg-muted"
-                  }`}
+                  className={`w-full p-4 rounded-xl mb-2 text-left transition-all duration-200 ${selectedChat === conversation.phone_number
+                    ? "bg-primary/10 border border-primary/20"
+                    : "hover:bg-muted"
+                    }`}
                 >
                   <div className="flex items-start gap-3">
                     <Avatar className="w-12 h-12 border-2 border-primary/20">
@@ -136,19 +154,73 @@ const MessagesTab = () => {
         {selectedChat && selectedConversation ? (
           <>
             {/* Chat Header */}
-            <div className="p-4 border-b border-primary/10 bg-reyna-charcoal flex items-center gap-4">
-              <Avatar className="w-12 h-12 border-2 border-primary/20">
-                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                  {selectedConversation.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h3 className="font-semibold text-foreground">{selectedConversation.name}</h3>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Phone className="w-3 h-3" />
-                  <span>{selectedConversation.phone_number}</span>
+            <div className="p-4 border-b border-primary/10 bg-reyna-charcoal flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Avatar className="w-12 h-12 border-2 border-primary/20">
+                  <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                    {selectedConversation.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="font-semibold text-foreground flex items-center gap-2">
+                    {selectedConversation.name}
+                  </h3>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Phone className="w-3 h-3" />
+                    <span>{selectedConversation.phone_number}</span>
+                  </div>
                 </div>
               </div>
+
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-primary hover:bg-primary/10"
+                    onClick={() => {
+                      setNewClientName(selectedConversation.name.startsWith("Cliente ") ? "" : selectedConversation.name);
+                    }}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-reyna-charcoal border-primary/20 text-foreground">
+                  <DialogHeader>
+                    <DialogTitle className="text-primary font-serif">Editar nombre del cliente</DialogTitle>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <label className="text-sm text-muted-foreground mb-2 block">Nombre completo</label>
+                    <Input
+                      value={newClientName}
+                      onChange={(e) => setNewClientName(e.target.value)}
+                      placeholder="Ej: Andres Canal"
+                      className="bg-muted border-primary/20 focus:border-primary"
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                    <Button
+                      onClick={async () => {
+                        if (newClientName.trim()) {
+                          try {
+                            await updateClientName.mutateAsync({
+                              phoneNumber: selectedConversation.phone_number,
+                              fullName: newClientName.trim()
+                            });
+                            setIsDialogOpen(false);
+                            toast({ title: "Nombre actualizado", description: "El nombre del cliente ha sido guardado exitosamente." });
+                          } catch (e) {
+                            toast({ title: "Error", description: "No se pudo actualizar el nombre.", variant: "destructive" });
+                          }
+                        }
+                      }}
+                    >
+                      Guardar cambios
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
 
             {/* Messages */}
@@ -168,18 +240,16 @@ const MessagesTab = () => {
                       className={`flex ${message.sender === "client" ? "justify-end" : "justify-start"}`}
                     >
                       <div
-                        className={`max-w-[80%] px-4 py-3 ${
-                          message.sender === "client"
-                            ? "chat-bubble-client"
-                            : "chat-bubble-assistant"
-                        }`}
+                        className={`max-w-[80%] px-4 py-3 ${message.sender === "client"
+                          ? "chat-bubble-client"
+                          : "chat-bubble-assistant"
+                          }`}
                       >
                         <p className="text-sm leading-relaxed whitespace-pre-wrap">
                           {message.message_content}
                         </p>
-                        <div className={`flex items-center gap-1 mt-2 ${
-                          message.sender === "client" ? "justify-end" : "justify-start"
-                        }`}>
+                        <div className={`flex items-center gap-1 mt-2 ${message.sender === "client" ? "justify-end" : "justify-start"
+                          }`}>
                           <Clock className="w-3 h-3 opacity-60" />
                           <span className="text-xs opacity-60">
                             {format(new Date(message.received_at), "HH:mm", { locale: es })}

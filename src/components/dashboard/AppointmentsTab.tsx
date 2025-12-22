@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { 
-  Calendar, 
-  Clock, 
-  User, 
-  Phone, 
-  Scissors, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Calendar,
+  Clock,
+  User,
+  Phone,
+  Scissors,
+  CheckCircle,
+  XCircle,
   AlertCircle,
   Bell,
   Search,
@@ -29,18 +29,22 @@ import { es } from "date-fns/locale";
 import { useAppointments, useAppointmentStats, useUpdateAppointment, type Appointment } from "@/hooks/useAppointments";
 import { useToast } from "@/hooks/use-toast";
 
-const AppointmentsTab = () => {
+interface AppointmentsTabProps {
+  onViewChat: (phoneNumber: string) => void;
+}
+
+const AppointmentsTab = ({ onViewChat }: AppointmentsTabProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [serviceFilter, setServiceFilter] = useState<string>("all");
   const { toast } = useToast();
-  
+
   const { data: appointments, isLoading } = useAppointments();
   const stats = useAppointmentStats();
   const updateAppointment = useUpdateAppointment();
 
   const filteredAppointments = appointments?.filter((apt) => {
-    const matchesSearch = 
+    const matchesSearch =
       apt.client_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       apt.phone_number.includes(searchQuery);
     const matchesStatus = statusFilter === "all" || apt.status === statusFilter;
@@ -271,12 +275,15 @@ const AppointmentsTab = () => {
                       </Button>
                     </>
                   )}
+                  {/* Always show View button, or at least when it's not pending? User asked for "Ver" to redirect. 
+                      The logic was: if pending -> Confirm/Cancel. If not pending -> Ver.
+                      We keep that logic. */}
                   {appointment.status !== "pending" && (
                     <Button
                       variant="outline"
                       size="sm"
                       className="border-primary/20 text-primary hover:bg-primary/10"
-                      disabled
+                      onClick={() => onViewChat(appointment.phone_number)}
                     >
                       Ver
                     </Button>

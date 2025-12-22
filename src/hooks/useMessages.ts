@@ -27,25 +27,44 @@ export function useConversations() {
   const query = useQuery({
     queryKey: ["conversations"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // 1. Recuperar todos los mensajes
+      const { data: messagesData, error: messagesError } = await supabase
         .from("messages")
         .select("*")
         .order("received_at", { ascending: false });
 
-      if (error) throw error;
+      if (messagesError) throw messagesError;
 
-      // Group messages by phone number and get last message
+      // 2. Recuperar todos los clientes conocidos para mapear nombres
+      // Usamos cast a any porque los tipos autogenerados no conocen la tabla 'clients' todavía
+      const { data: clientsData, error: clientsError } = await (supabase as any)
+        .from("clients")
+        .select("phone_number, full_name");
+
+      if (clientsError) {
+        console.error("Error al recuperar clientes:", clientsError);
+      }
+
+      // Crear un mapa de teléfono -> nombre
+      const clientNamesMap = new Map<string, string>();
+      if (clientsData) {
+        clientsData.forEach((c: any) => clientNamesMap.set(c.phone_number, c.full_name));
+      }
+
+      // 3. Agrupar mensajes por número de teléfono
       const conversationsMap = new Map<string, Conversation>();
-      
-      data?.forEach((msg) => {
+
+      messagesData?.forEach((msg) => {
         if (!conversationsMap.has(msg.phone_number)) {
-          const unreadCount = data.filter(
+          const unreadCount = messagesData.filter(
             (m) => m.phone_number === msg.phone_number && !m.read && m.sender === "client"
           ).length;
-          
+
+          const clientName = clientNamesMap.get(msg.phone_number) || `Cliente ${msg.phone_number.slice(-4)}`;
+
           conversationsMap.set(msg.phone_number, {
             phone_number: msg.phone_number,
-            name: `Cliente ${msg.phone_number.slice(-4)}`,
+            name: clientName,
             last_message: msg.message_content,
             last_message_time: msg.received_at,
             unread_count: unreadCount,
@@ -87,7 +106,7 @@ export function useMessages(phoneNumber: string | null) {
     queryKey: ["messages", phoneNumber],
     queryFn: async () => {
       if (!phoneNumber) return [];
-      
+
       const { data, error } = await supabase
         .from("messages")
         .select("*")
@@ -108,9 +127,9 @@ export function useMessages(phoneNumber: string | null) {
       .channel(`messages-${phoneNumber}`)
       .on(
         "postgres_changes",
-        { 
-          event: "*", 
-          schema: "public", 
+        {
+          event: "*",
+          schema: "public",
           table: "messages",
           filter: `phone_number=eq.${phoneNumber}`
         },

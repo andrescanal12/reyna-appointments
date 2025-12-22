@@ -24,6 +24,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("messages");
+  const [selectedConversationPhone, setSelectedConversationPhone] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -38,6 +39,11 @@ const Dashboard = () => {
   const handleLogout = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const handleViewChat = (phoneNumber: string) => {
+    setSelectedConversationPhone(phoneNumber);
+    setActiveTab("messages");
   };
 
   return (
@@ -242,8 +248,8 @@ const Dashboard = () => {
             transition={{ duration: 0.2 }}
             className="h-full"
           >
-            {activeTab === "messages" && <MessagesTab />}
-            {activeTab === "appointments" && <AppointmentsTab />}
+            {activeTab === "messages" && <MessagesTab initialSelectedChat={selectedConversationPhone} />}
+            {activeTab === "appointments" && <AppointmentsTab onViewChat={handleViewChat} />}
             {activeTab === "settings" && <SettingsTab />}
           </motion.div>
         </AnimatePresence>
