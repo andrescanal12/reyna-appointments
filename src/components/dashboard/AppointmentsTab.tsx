@@ -26,8 +26,19 @@ import {
 } from "@/components/ui/select";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { useAppointments, useAppointmentStats, useUpdateAppointment, type Appointment } from "@/hooks/useAppointments";
+import { useAppointments, useAppointmentStats, useUpdateAppointment, useCreateAppointment, type Appointment } from "@/hooks/useAppointments";
 import { useToast } from "@/hooks/use-toast";
+import { Plus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 interface AppointmentsTabProps {
   onViewChat: (phoneNumber: string) => void;
@@ -42,6 +53,60 @@ const AppointmentsTab = ({ onViewChat }: AppointmentsTabProps) => {
   const { data: appointments, isLoading } = useAppointments();
   const stats = useAppointmentStats();
   const updateAppointment = useUpdateAppointment();
+  const createAppointment = useCreateAppointment();
+
+  // State for new appointment form
+  const [isNewOpen, setIsNewOpen] = useState(false);
+  const [newClientName, setNewClientName] = useState("");
+  const [newClientPhone, setNewClientPhone] = useState("");
+  const [newServiceType, setNewServiceType] = useState("");
+  const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("");
+
+  const handleCreateAppointment = async () => {
+    if (!newClientName || !newClientPhone || !newServiceType || !newDate || !newTime) {
+      toast({
+        title: "Faltan datos",
+        description: "Por favor completa todos los campos",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Combine date and time
+      // Assuming naive combination for now, or forcing the +01:00 offset as per backend rules
+      // If the user inputs 2024-12-25 and 10:00, we want 2024-12-25T10:00:00+01:00
+      const isoDate = `${newDate}T${newTime}:00+01:00`;
+
+      await createAppointment.mutateAsync({
+        client_name: newClientName,
+        phone_number: newClientPhone,
+        service_type: newServiceType,
+        appointment_date: isoDate,
+        status: "confirmed", // Manual appointments are usually confirmed
+        notes: "Agendado manualmente desde el Dashboard"
+      });
+
+      toast({
+        title: "Cita creada",
+        description: "La cita se ha agendado correctamente",
+      });
+      setIsNewOpen(false);
+      // Reset form
+      setNewClientName("");
+      setNewClientPhone("");
+      setNewServiceType("");
+      setNewDate("");
+      setNewTime("");
+    } catch (e) {
+      toast({
+        title: "Error",
+        description: "No se pudo crear la cita. Verifica la conexión.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const filteredAppointments = appointments?.filter((apt) => {
     const matchesSearch =
@@ -116,9 +181,96 @@ const AppointmentsTab = ({ onViewChat }: AppointmentsTabProps) => {
   return (
     <div className="h-[calc(100vh-4rem)] lg:h-screen flex flex-col p-6">
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="font-serif text-3xl text-primary mb-2">Citas</h2>
-        <p className="text-muted-foreground">Gestiona todas las citas de la peluquería</p>
+      <div className="mb-6 flex justify-between items-center bg-transparent">
+        <div>
+          <h2 className="font-serif text-3xl text-primary mb-2">Citas</h2>
+          <p className="text-muted-foreground">Gestiona todas las citas de la peluquería</p>
+        </div>
+
+        <Dialog open={isNewOpen} onOpenChange={setIsNewOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Plus className="w-4 h-4 mr-2" />
+              Agendar Cita
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-reyna-charcoal border-primary/20 text-foreground">
+            <DialogHeader>
+              <DialogTitle className="text-primary font-serif">Nueva Cita Manual</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Ingresa los datos para agendar una cita directamente.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Nombre del Cliente</Label>
+                <Input
+                  id="name"
+                  value={newClientName}
+                  onChange={(e) => setNewClientName(e.target.value)}
+                  className="bg-muted border-primary/20"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="phone">Teléfono (con prefijo +34)</Label>
+                <Input
+                  id="phone"
+                  value={newClientPhone}
+                  onChange={(e) => setNewClientPhone(e.target.value)}
+                  placeholder="+34..."
+                  className="bg-muted border-primary/20"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="service">Servicio</Label>
+                <Select value={newServiceType} onValueChange={setNewServiceType}>
+                  <SelectTrigger className="bg-muted border-primary/20">
+                    <SelectValue placeholder="Selecciona un servicio" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-reyna-charcoal border-primary/20">
+                    {[
+                      "Corte/Peinado",
+                      "Tratamiento de Cauterización",
+                      "Tratamiento Células Madre",
+                      "Tintes/Baños de Color",
+                      "Keratina (Alisado)",
+                      "Botox Capilar",
+                      "Reconstrucción (Radiante Glock)"
+                    ].map(s => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="date">Fecha</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={newDate}
+                    onChange={(e) => setNewDate(e.target.value)}
+                    className="bg-muted border-primary/20"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="time">Hora</Label>
+                  <Input
+                    id="time"
+                    type="time"
+                    value={newTime}
+                    onChange={(e) => setNewTime(e.target.value)}
+                    className="bg-muted border-primary/20"
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setIsNewOpen(false)}>Cancelar</Button>
+              <Button onClick={handleCreateAppointment}>Guardar Cita</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Stats Cards */}
