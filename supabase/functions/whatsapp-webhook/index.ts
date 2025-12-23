@@ -177,6 +177,11 @@ serve(async (req) => {
         })
 
         let aiData = await response.json()
+        console.log("OpenAI Initial Response:", JSON.stringify(aiData)); // DEBUG
+
+        if (!aiData.choices || !aiData.choices[0]) {
+            throw new Error(`OpenAI Init Error: ${aiData.error ? aiData.error.message : JSON.stringify(aiData)}`);
+        }
         let message = aiData.choices[0].message
 
         // 5. Herramientas
@@ -262,6 +267,11 @@ serve(async (req) => {
                 })
             })
             const finalData = await finalResp.json()
+            console.log("OpenAI Final Response:", JSON.stringify(finalData)); // DEBUG
+
+            if (!finalData.choices || !finalData.choices[0]) {
+                throw new Error(`OpenAI Error: ${JSON.stringify(finalData)}`);
+            }
             message = finalData.choices[0].message
         }
 
@@ -272,7 +282,8 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'text/xml' }
         })
 
-    } catch (e) {
-        return new Response(`<Response><Message>Error técnico de LucIA.</Message></Response>`, { headers: { ...corsHeaders, 'Content-Type': 'text/xml' } })
+    } catch (e: any) {
+        console.error('Webhook Error:', e);
+        return new Response(`<Response><Message>Error técnico de LucIA: ${e.message || e}</Message></Response>`, { headers: { ...corsHeaders, 'Content-Type': 'text/xml' } })
     }
 })
