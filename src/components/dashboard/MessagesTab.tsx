@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Search, Phone, Clock, CheckCheck, MessageCircle, Edit2 } from "lucide-react";
+import { Search, Phone, Clock, CheckCheck, MessageCircle, Edit2, Bot, BotOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,8 +16,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useConversations, useMessages, useMarkMessagesAsRead, type Conversation, type Message } from "@/hooks/useMessages";
-import { useUpdateClientName } from "@/hooks/useClients";
+import { useUpdateClientName, useToggleBot } from "@/hooks/useClients";
 import { useToast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface MessagesTabProps {
   initialSelectedChat?: string | null;
@@ -35,6 +37,7 @@ const MessagesTab = ({ initialSelectedChat }: MessagesTabProps) => {
   const { data: messages, isLoading: messagesLoading } = useMessages(selectedChat);
   const markAsRead = useMarkMessagesAsRead();
   const updateClientName = useUpdateClientName();
+  const toggleBot = useToggleBot();
 
   const filteredConversations = conversations?.filter(
     (conv) =>
@@ -140,6 +143,12 @@ const MessagesTab = ({ initialSelectedChat }: MessagesTabProps) => {
                           {conversation.unread_count}
                         </span>
                       )}
+                      {!conversation.bot_enabled && (
+                        <div className="flex items-center gap-1 mt-1 text-xs text-yellow-500">
+                          <BotOff className="w-3 h-3" />
+                          <span>Bot desactivado</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.button>
@@ -172,55 +181,81 @@ const MessagesTab = ({ initialSelectedChat }: MessagesTabProps) => {
                 </div>
               </div>
 
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-primary hover:bg-primary/10"
-                    onClick={() => {
-                      setNewClientName(selectedConversation.name.startsWith("Cliente ") ? "" : selectedConversation.name);
-                    }}
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="bg-reyna-charcoal border-primary/20 text-foreground">
-                  <DialogHeader>
-                    <DialogTitle className="text-primary font-serif">Editar nombre del cliente</DialogTitle>
-                  </DialogHeader>
-                  <div className="py-4">
-                    <label className="text-sm text-muted-foreground mb-2 block">Nombre completo</label>
-                    <Input
-                      value={newClientName}
-                      onChange={(e) => setNewClientName(e.target.value)}
-                      placeholder="Ej: Andres Canal"
-                      className="bg-muted border-primary/20 focus:border-primary"
-                    />
-                  </div>
-                  <DialogFooter>
-                    <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                    <Button
-                      onClick={async () => {
-                        if (newClientName.trim()) {
-                          try {
-                            await updateClientName.mutateAsync({
-                              phoneNumber: selectedConversation.phone_number,
-                              fullName: newClientName.trim()
-                            });
-                            setIsDialogOpen(false);
-                            toast({ title: "Nombre actualizado", description: "El nombre del cliente ha sido guardado exitosamente." });
-                          } catch (e) {
-                            toast({ title: "Error", description: "No se pudo actualizar el nombre.", variant: "destructive" });
-                          }
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-lg">
+                  <Label htmlFor="bot-toggle" className="text-sm cursor-pointer flex items-center gap-2">
+                    {selectedConversation?.bot_enabled ? <Bot className="w-4 h-4 text-green-500" /> : <BotOff className="w-4 h-4 text-yellow-500" />}
+                    <span className="hidden sm:inline">{selectedConversation?.bot_enabled ? "Bot activo" : "Bot desactivado"}</span>
+                  </Label>
+                  <Switch
+                    id="bot-toggle"
+                    checked={selectedConversation?.bot_enabled ?? true}
+                    onCheckedChange={async (checked) => {
+                      if (selectedConversation) {
+                        try {
+                          await toggleBot.mutateAsync({ phoneNumber: selectedConversation.phone_number, botEnabled: checked });
+                          toast({
+                            title: checked ? "Bot activado" : "Bot desactivado",
+                            description: checked ? "LucIA responderá automáticamente." : "Ahora puedes responder manualmente."
+                          });
+                        } catch (e) {
+                          toast({ title: "Error", description: "No se pudo cambiar el estado del bot.", variant: "destructive" });
                         }
+                      }
+                    }}
+                  />
+                </div>
+
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-primary hover:bg-primary/10"
+                      onClick={() => {
+                        setNewClientName(selectedConversation.name.startsWith("Cliente ") ? "" : selectedConversation.name);
                       }}
                     >
-                      Guardar cambios
+                      <Edit2 className="w-4 h-4" />
                     </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                  </DialogTrigger>
+                  <DialogContent className="bg-reyna-charcoal border-primary/20 text-foreground">
+                    <DialogHeader>
+                      <DialogTitle className="text-primary font-serif">Editar nombre del cliente</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                      <label className="text-sm text-muted-foreground mb-2 block">Nombre completo</label>
+                      <Input
+                        value={newClientName}
+                        onChange={(e) => setNewClientName(e.target.value)}
+                        placeholder="Ej: Andres Canal"
+                        className="bg-muted border-primary/20 focus:border-primary"
+                      />
+                    </div>
+                    <DialogFooter>
+                      <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                      <Button
+                        onClick={async () => {
+                          if (newClientName.trim()) {
+                            try {
+                              await updateClientName.mutateAsync({
+                                phoneNumber: selectedConversation.phone_number,
+                                fullName: newClientName.trim()
+                              });
+                              setIsDialogOpen(false);
+                              toast({ title: "Nombre actualizado", description: "El nombre del cliente ha sido guardado exitosamente." });
+                            } catch (e: any) {
+                              toast({ title: "Error", description: e?.message || "No se pudo actualizar el nombre.", variant: "destructive" });
+                            }
+                          }
+                        }}
+                      >
+                        Guardar cambios
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
 
             {/* Messages */}
@@ -285,7 +320,7 @@ const MessagesTab = ({ initialSelectedChat }: MessagesTabProps) => {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 };
 
