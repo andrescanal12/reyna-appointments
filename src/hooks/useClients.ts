@@ -7,32 +7,46 @@ export function useUpdateClientName() {
 
     return useMutation({
         mutationFn: async ({ phoneNumber, fullName }: { phoneNumber: string; fullName: string }) => {
+            console.log('🔄 Updating client name:', { phoneNumber, fullName });
+
             // First, check if client exists
-            const { data: existingClient } = await (supabase as any)
+            const { data: existingClient, error: checkError } = await (supabase as any)
                 .from("clients")
                 .select("*")
                 .eq("phone_number", phoneNumber)
                 .single();
 
+            console.log('📊 Check result:', { existingClient, checkError });
+
             if (existingClient) {
                 // Update existing client
+                console.log('✏️ Updating existing client...');
                 const { error } = await (supabase as any)
                     .from("clients")
                     .update({ full_name: fullName })
                     .eq("phone_number", phoneNumber);
 
-                if (error) throw error;
+                if (error) {
+                    console.error('❌ Update error:', error);
+                    throw error;
+                }
+                console.log('✅ Update successful');
             } else {
                 // Insert new client
+                console.log('➕ Inserting new client...');
                 const { error } = await (supabase as any)
                     .from("clients")
                     .insert({
                         phone_number: phoneNumber,
-                        full_name: fullName,
-                        bot_enabled: true
+                        full_name: fullName
+                        // bot_enabled removed - column doesn't exist in production yet
                     });
 
-                if (error) throw error;
+                if (error) {
+                    console.error('❌ Insert error:', error);
+                    throw error;
+                }
+                console.log('✅ Insert successful');
             }
 
             return { phoneNumber, fullName };
@@ -48,9 +62,11 @@ export function useUpdateClientName() {
                 );
             });
 
-            // Also invalidate to ensure consistency on next natural refetch
-            queryClient.invalidateQueries({ queryKey: ["conversations"] });
-            queryClient.invalidateQueries({ queryKey: ["messages"] });
+            // Force refetch after a short delay to ensure DB update completed
+            setTimeout(async () => {
+                await queryClient.refetchQueries({ queryKey: ["conversations"] });
+                console.log('🔄 Conversations refetched from database');
+            }, 500);
         },
     });
 }

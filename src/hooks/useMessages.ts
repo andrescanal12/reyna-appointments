@@ -27,7 +27,7 @@ export function useConversations() {
 
   const query = useQuery({
     queryKey: ["conversations"],
-    staleTime: 0,
+    staleTime: 30000, // Cache for 30 seconds
     gcTime: 0,
     queryFn: async () => {
       // 1. Recuperar todos los mensajes
@@ -42,21 +42,22 @@ export function useConversations() {
       // Usamos cast a any porque los tipos autogenerados no conocen la tabla 'clients' todavía
       const { data: clientsData, error: clientsError } = await (supabase as any)
         .from("clients")
-        .select("phone_number, full_name, bot_enabled");
+        .select("phone_number, full_name");
+      // bot_enabled removed - column doesn't exist in production
 
       if (clientsError) {
         console.error("Error al recuperar clientes:", clientsError);
       }
 
-      // Crear mapas de teléfono -> nombre y teléfono -> bot_enabled
+      // Crear mapa de teléfono -> nombre
       const clientNamesMap = new Map<string, string>();
-      const botEnabledMap = new Map<string, boolean>();
       if (clientsData) {
+        console.log('📞 Clients from DB:', clientsData);
         clientsData.forEach((c: any) => {
           clientNamesMap.set(c.phone_number, c.full_name);
-          botEnabledMap.set(c.phone_number, c.bot_enabled ?? true);
         });
       }
+      console.log('🗺️ Client names map:', Array.from(clientNamesMap.entries()));
 
       // 3. Agrupar mensajes por número de teléfono
       const conversationsMap = new Map<string, Conversation>();
@@ -68,7 +69,9 @@ export function useConversations() {
           ).length;
 
           const clientName = clientNamesMap.get(msg.phone_number) || `Cliente ${msg.phone_number.slice(-4)}`;
-          const botEnabled = botEnabledMap.get(msg.phone_number) ?? true;
+          const botEnabled = true; // Default since column doesn't exist
+
+          console.log(`👤 Mapping for ${msg.phone_number}:`, { clientName, found: clientNamesMap.has(msg.phone_number) });
 
           conversationsMap.set(msg.phone_number, {
             phone_number: msg.phone_number,
