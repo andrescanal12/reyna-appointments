@@ -98,6 +98,21 @@ serve(async (req) => {
         const { data: settings } = await supabase.from('salon_settings').select('*').eq('id', 1).single()
         const { data: appts } = await supabase.from('appointments').select('*').eq('phone_number', from).gte('appointment_date', new Date().toISOString()).order('appointment_date', { ascending: true })
 
+        // --- Bot Enabled Check (DISABLED until bot_enabled column is added to database) ---
+        // TODO: Uncomment this after adding bot_enabled column to clients table
+        /*
+        try {
+            const { data: clientData, error } = await supabase.from('clients').select('bot_enabled').eq('phone_number', from).single()
+            if (!error && clientData && clientData.bot_enabled === false) {
+                console.log(`Bot disabled for ${from}. Skipping response.`)
+                return new Response('ok', { headers: corsHeaders })
+            }
+        } catch (e) {
+            console.log('bot_enabled check skipped (column may not exist):', e)
+        }
+        */
+        // --- END ---
+
         const appointmentsContext = appts && appts.length > 0
             ? appts.map((a: any) => `- ID: ${a.id} | Fecha: ${new Date(a.appointment_date).toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })} | Servicio: ${a.service_type} | Status: ${a.status}`).join('\n')
             : "No tiene citas próximas."

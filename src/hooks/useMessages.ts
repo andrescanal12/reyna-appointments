@@ -18,6 +18,7 @@ export interface Conversation {
   last_message_time: string;
   unread_count: number;
   sender: "client" | "assistant";
+  bot_enabled: boolean;
 }
 
 // Get all unique conversations with their last message
@@ -26,6 +27,8 @@ export function useConversations() {
 
   const query = useQuery({
     queryKey: ["conversations"],
+    staleTime: 0,
+    gcTime: 0,
     queryFn: async () => {
       // 1. Recuperar todos los mensajes
       const { data: messagesData, error: messagesError } = await supabase
@@ -35,20 +38,24 @@ export function useConversations() {
 
       if (messagesError) throw messagesError;
 
-      // 2. Recuperar todos los clientes conocidos para mapear nombres
+      // 2. Recuperar todos los clientes conocidos para mapear nombres y bot_enabled
       // Usamos cast a any porque los tipos autogenerados no conocen la tabla 'clients' todavía
       const { data: clientsData, error: clientsError } = await (supabase as any)
         .from("clients")
-        .select("phone_number, full_name");
+        .select("phone_number, full_name, bot_enabled");
 
       if (clientsError) {
         console.error("Error al recuperar clientes:", clientsError);
       }
 
-      // Crear un mapa de teléfono -> nombre
+      // Crear mapas de teléfono -> nombre y teléfono -> bot_enabled
       const clientNamesMap = new Map<string, string>();
+      const botEnabledMap = new Map<string, boolean>();
       if (clientsData) {
-        clientsData.forEach((c: any) => clientNamesMap.set(c.phone_number, c.full_name));
+        clientsData.forEach((c: any) => {
+          clientNamesMap.set(c.phone_number, c.full_name);
+          botEnabledMap.set(c.phone_number, c.bot_enabled ?? true);
+        });
       }
 
       // 3. Agrupar mensajes por número de teléfono
@@ -61,6 +68,7 @@ export function useConversations() {
           ).length;
 
           const clientName = clientNamesMap.get(msg.phone_number) || `Cliente ${msg.phone_number.slice(-4)}`;
+          const botEnabled = botEnabledMap.get(msg.phone_number) ?? true;
 
           conversationsMap.set(msg.phone_number, {
             phone_number: msg.phone_number,
@@ -68,7 +76,8 @@ export function useConversations() {
             last_message: msg.message_content,
             last_message_time: msg.received_at,
             unread_count: unreadCount,
-            sender: msg.sender as "client" | "assistant"
+            sender: msg.sender as "client" | "assistant",
+            bot_enabled: botEnabled
           });
         }
       });
@@ -162,6 +171,27 @@ export function useMarkMessagesAsRead() {
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
+  });
+}
+
+
+// Send manual message
+export function useSendMessage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ phoneNumber, messageContent }: { phoneNumber: string; messageContent: string }) => {
+      const { data, error } = await supabase.functions.invoke('send-message', {
+        body: { phone_number: phoneNumber, message_content: messageContent }
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["messages", variables.phoneNumber] });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });
