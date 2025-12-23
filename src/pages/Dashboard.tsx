@@ -170,7 +170,7 @@ const Dashboard = () => {
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full border-2 border-primary overflow-hidden shadow-gold-glow">
             <img
-              src="/logo-reyna.jpg"
+              src="/logo-reyna.png"
               alt="Logo"
               className="w-full h-full object-cover"
             />
