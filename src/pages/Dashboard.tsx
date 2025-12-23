@@ -176,7 +176,7 @@ const Dashboard = () => {
             />
           </div>
           <div>
-            <h1 className="font-serif text-xl text-primary font-bold">LucIA</h1>
+            <h1 className="font-serif text-xl text-primary font-bold">Peluquería Reyna</h1>
             <p className="text-xs text-muted-foreground capitalize">¡Hola, {userName}!</p>
           </div>
         </div>
